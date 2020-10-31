@@ -1,0 +1,2 @@
+# HumanFriendlyOutput
+ pwsh HumanFriendlyOutput
