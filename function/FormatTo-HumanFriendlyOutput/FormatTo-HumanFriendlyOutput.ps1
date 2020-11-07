@@ -14,12 +14,15 @@
         $AllItems = @()
     }
     process {
+        # Write-Progress -Activity "Search in Progress" # -Status "$i% Complete:" -PercentComplete $i;
+
         $AllItems += [PSCustomObject][ordered]@{
             'LengthInBytes'        = $InputObject.Length
             'SizeInPercent'        = $null
             'SizeInPercentRounded' = $null
             'SizeVisualised'       = $null
             'Name'                 = $InputObject.Name
+            'IsFolder'             = $InputObject.PSIsContainer
         }
     }
 
@@ -30,9 +33,16 @@
             $SizeInPercent = $_.LengthInBytes / $TotalSize * 100
             $SizeInPercentRounded = ([math]::round(([math]::round($SizeInPercent) / 10)))
 
+            if ($SizeInPercentRounded -ge 1) {
+                $SizeVisualised = ($SizeInPercentRounded..1 | ForEach-Object -Process { '#' }) -join ''
+            }
+            else {
+                $SizeVisualised = $null
+            }
+
             $_.SizeInPercent = $SizeInPercent
             $_.SizeInPercentRounded = $SizeInPercentRounded
-            $_.SizeVisualised = ($SizeInPercentRounded..0 | ForEach-Object { '#' }) -join ''
+            $_.SizeVisualised = $SizeVisualised
         }
 
         # foreach ($Item in $AllItems) {
