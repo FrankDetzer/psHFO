@@ -13,7 +13,7 @@
     
     process {
         foreach ($Item in $InputPath) {
-        FormatTo-HumanFriendlyOutput -Name $Item.Name -Length $Item.Length
+        FormatTo-HumanFriendlyOutput -Name $Item.Name -Length $Item.Length 
 
     }}
 
@@ -22,3 +22,5 @@
         
     }
 }
+
+Set-Alias -Name 'ncdu' -Value 'FormatTo-HumanFriendlyOutput'
