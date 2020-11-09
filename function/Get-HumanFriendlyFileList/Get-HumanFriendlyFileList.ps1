@@ -9,9 +9,9 @@
 
     begin {
         $InputPath = Get-ChildItem -Path $Path #-Recurse $Recurse
-        $obj = @()
+        # $obj = @()
         $i = 1
-        Set-Alias -Name 'ncdu' -Value 'Get-HumanFriendlyFileList'
+        # Set-Alias -Name 'ncdu' -Value 'Get-HumanFriendlyFileList'
     }
 
     process {

@@ -30,13 +30,13 @@
 
     process {
         $AllItems += [PSCustomObject][ordered]@{
-            'LengthInBytes'    = $InputObject.Length
-            $LengthInMagnitude = $InputObject.Length / $MagnitudeCalc
+            'LengthInBytes'    = $LengthInBytes
+            $LengthInMagnitude = $LengthInBytes / $MagnitudeCalc
             'SizeInPercent'    = $null
             'SizeInOneTenths'  = $null
             'SizeVisualised'   = $null
-            'Name'             = $InputObject.Name
-            'IsContainer'      = $InputObject.PSIsContainer
+            'Name'             = $Name
+            'IsContainer'      = $IsContainer
         }
     }
 
