@@ -1,7 +1,11 @@
 ﻿function FormatTo-HumanFriendlyOutput {
     param (
         [parameter(ValueFromPipeline)]
-        [psobject]$InputObject,
+        [psobject]$Name,
+        [parameter(ValueFromPipeline)]
+        [psobject]$LengthInBytes,
+        [parameter(ValueFromPipeline)]
+        [psobject]$IsContainer,
         [validateset('Bytes', 'KB', 'MB', 'GB', 'TB')]
         [string]$Magnitude = 'MB',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
@@ -12,7 +16,6 @@
     )
 
     begin {
-
         switch ($Magnitude) {
             'Bytes' { $MagnitudeCalc = 1 }
             'KB' { $MagnitudeCalc = 1KB }
@@ -24,9 +27,8 @@
         $AllItems = @()
         $LengthInMagnitude = 'LengthIn' + $Magnitude
     }
-    process {
-        # Write-Progress -Activity 'Search in Progress' # -Status '$i% Complete:' -PercentComplete $i;
 
+    process {
         $AllItems += [PSCustomObject][ordered]@{
             'LengthInBytes'    = $InputObject.Length
             $LengthInMagnitude = $InputObject.Length / $MagnitudeCalc
@@ -34,7 +36,7 @@
             'SizeInOneTenths'  = $null
             'SizeVisualised'   = $null
             'Name'             = $InputObject.Name
-            'IsFolder'         = $InputObject.PSIsContainer
+            'IsContainer'      = $InputObject.PSIsContainer
         }
     }
 
@@ -51,8 +53,9 @@
             else {
                 if ($DisplayUnderOneTenthInVisualisation) {
                     $SizeVisualised = '[<1%       ]'
-                }else {
-                    10..1 | ForEach-Object -Begin { $SizeVisualised = '[' }  -Process { $SizeVisualised += $VisualisationEmpty } -End {$SizeVisualised += ']' }
+                }
+                else {
+                    10..1 | ForEach-Object -Begin { $SizeVisualised = '[' }  -Process { $SizeVisualised += $VisualisationEmpty } -End { $SizeVisualised += ']' }
                 }
             }
 
@@ -60,10 +63,6 @@
             $_.SizeInOneTenths = $SizeInOneTenths
             $_.SizeVisualised = $SizeVisualised
         }
-
         $AllItems | Sort-Object LengthInBytes -Descending
     }
-
 }
-
-Set-Alias -Name 'ncdu' -Value 'FormatTo-HumanFriendlyOutput'
