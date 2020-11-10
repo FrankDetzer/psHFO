@@ -1,11 +1,13 @@
 ﻿function FormatTo-HumanFriendlyOutput {
     param (
         [parameter(ValueFromPipeline)]
-        [psobject]$Name,
-        [parameter(ValueFromPipeline)]
-        [psobject]$LengthInBytes,
-        [parameter(ValueFromPipeline)]
-        [psobject]$IsContainer,
+        [psobject]$InputObjectCollection,
+        # [parameter(ValueFromPipeline)]
+        # [psobject]$Name,
+        # [parameter(ValueFromPipeline)]
+        # [psobject]$LengthInBytes,
+        # [parameter(ValueFromPipeline)]
+        # [psobject]$IsContainer,
         [validateset('Bytes', 'KB', 'MB', 'GB', 'TB')]
         [string]$Magnitude = 'MB',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
@@ -29,14 +31,16 @@
     }
 
     process {
-        $AllItems += [PSCustomObject][ordered]@{
-            'LengthInBytes'    = $LengthInBytes
-            $LengthInMagnitude = $LengthInBytes / $MagnitudeCalc
-            'SizeInPercent'    = $null
-            'SizeInOneTenths'  = $null
-            'SizeVisualised'   = $null
-            'Name'             = $Name
-            'IsContainer'      = $IsContainer
+        foreach ($InputObject in $InputObjectCollection) {
+            $AllItems += [PSCustomObject][ordered]@{
+                'LengthInBytes'   = $InputObject.LengthInBytes
+                # $LengthInMagnitude = $InputObject.LengthInBytes / $MagnitudeCalc
+                'SizeInPercent'   = $null
+                'SizeInOneTenths' = $null
+                'SizeVisualised'  = $null
+                'Name'            = $InputObject.Name
+                'IsContainer'     = $InputObject.IsContainer
+            }
         }
     }
 
@@ -48,7 +52,10 @@
             $SizeInOneTenths = ([math]::round(([math]::round($SizeInPercent) / 10)))
 
             if ($SizeInOneTenths -ge 1) {
-                $SizeInOneTenths..1 | ForEach-Object -Begin { $SizeVisualised = '[' }  -Process { $SizeVisualised += $VisualisationFull } -End { (10 - $SizeInOneTenths)..1 | ForEach-Object -Process { $SizeVisualised += $VisualisationEmpty }; $SizeVisualised += ']' }
+                $SizeInOneTenths..1 | ForEach-Object -Begin { $SizeVisualised = '[' }  -Process { $SizeVisualised += $VisualisationFull } -End {
+                    if ($SizeInOneTenths -lt 10) { (10 - $SizeInOneTenths)..1 | ForEach-Object -Process { $SizeVisualised += $VisualisationEmpty } }
+                    $SizeVisualised += ']'
+                }
             }
             else {
                 if ($DisplayUnderOneTenthInVisualisation) {
@@ -63,6 +70,7 @@
             $_.SizeInOneTenths = $SizeInOneTenths
             $_.SizeVisualised = $SizeVisualised
         }
+
         $AllItems | Sort-Object LengthInBytes -Descending
     }
 }

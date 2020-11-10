@@ -1,12 +1,8 @@
-﻿function Get-HumanFriendlyFileList {
+﻿function Get-HumanFriendlyVolumeList {
     [CmdletBinding()]
-    param (
-        $Path = $env:USERPROFILE,
-        [switch]$Recurse2 = $true
-    )
 
     begin {
-        $InputPath = Get-ChildItem -Path $Path #-Recurse $Recurse
+        $InputPath = Get-Volume
         $obj = @()
         $i = 1
     }
