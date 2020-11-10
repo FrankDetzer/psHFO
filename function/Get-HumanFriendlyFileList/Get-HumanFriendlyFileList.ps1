@@ -1,13 +1,13 @@
 ﻿function Get-HumanFriendlyFileList {
     [CmdletBinding()]
     param (
-        $Path = $env:USERPROFILE,
-        [switch]$Recurse2 = $true
+        $Path = (Get-Location).Path
+        # $Path = $env:USERPROFILE
     )
 
     begin {
-        $InputPath = Get-ChildItem -Path $Path #-Recurse $Recurse
-        $obj = @()
+        $InputPath = Get-ChildItem -Path $Path -Recurse:$false
+        $PreparedDataForEngine = @()
         $i = 1
     }
 
@@ -17,27 +17,29 @@
             Write-Progress -Activity 'Search in Progress'  -Status "$i% Complete:" -PercentComplete $i;
 
             if ($Item.PSIsContainer) {
-                $LengthInBytes = (Get-ChildItem -Path $Item.FullName -Recurse:$Recurse2 -File | Measure-Object Length -Sum).Sum
+                $Length = (Get-ChildItem -Path $Item.FullName -Recurse:$true -File | Measure-Object Length -Sum).Sum
 
             }
             else {
-                $LengthInBytes = $Item.Length
+                $Length = $Item.Length
             }
 
-            if ($null -eq $LengthInBytes) {
-                $LengthInBytes = 0
+            if ($null -eq $Length) {
+                $Length = 0
             }
 
-
-            $obj += [PSCustomObject][ordered]@{
+            $PreparedDataForEngine += [PSCustomObject][ordered]@{
                 'Name'          = $Item.Name
-                'LengthInBytes' = $LengthInBytes
+                'Length' = $Length
                 'IsContainer'   = $Item.PSIsContainer
+                'FriendlyName1' = $null
+                'FriendlyName2' = $null
+                'FriendlyName3' = $null
             }
         }
     }
 
     end {
-        FormatTo-HumanFriendlyOutput -InputObjectCollection $obj
+        FormatTo-HumanFriendlyOutput -InputObjectCollection $PreparedDataForEngine
     }
 }

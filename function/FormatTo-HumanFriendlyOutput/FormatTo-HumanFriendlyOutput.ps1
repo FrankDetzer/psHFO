@@ -2,12 +2,12 @@
     param (
         [parameter(ValueFromPipeline)]
         [psobject]$InputObjectCollection,
-        # [parameter(ValueFromPipeline)]
-        # [psobject]$Name,
-        # [parameter(ValueFromPipeline)]
-        # [psobject]$LengthInBytes,
-        # [parameter(ValueFromPipeline)]
-        # [psobject]$IsContainer,
+        [parameter(ValueFromPipeline)]
+        [string]$PropertyName1 = "PropertyName1",
+        [parameter(ValueFromPipeline)]
+        [string]$PropertyName2 = "PropertyName2",
+        [parameter(ValueFromPipeline)]
+        [string]$PropertyName3 = "PropertyName3",
         [validateset('Bytes', 'KB', 'MB', 'GB', 'TB')]
         [string]$Magnitude = 'MB',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
@@ -27,28 +27,30 @@
         }
 
         $AllItems = @()
-        $LengthInMagnitude = 'LengthIn' + $Magnitude
     }
 
     process {
         foreach ($InputObject in $InputObjectCollection) {
             $AllItems += [PSCustomObject][ordered]@{
-                'LengthInBytes'   = $InputObject.LengthInBytes
-                # $LengthInMagnitude = $InputObject.LengthInBytes / $MagnitudeCalc
+               # 'Length'          = "{0:n2} $($Magnitude)" -f ($InputObject.Length / $MagnitudeCalc)
+                 'Length'          = $InputObject.Length
                 'SizeInPercent'   = $null
                 'SizeInOneTenths' = $null
                 'SizeVisualised'  = $null
                 'Name'            = $InputObject.Name
+                $PropertyName1    = $InputObject.PropertyName1
+                $PropertyName2    = $InputObject.PropertyName2
+                $PropertyName3    = $InputObject.PropertyName3
                 'IsContainer'     = $InputObject.IsContainer
             }
         }
     }
 
     end {
-        $TotalSize = ($AllItems | Measure-Object -Property LengthInBytes -Sum).Sum
+        $TotalSize = ($AllItems | Measure-Object -Property Length -Sum).Sum
 
         $AllItems | ForEach-Object -Process {
-            $SizeInPercent = $_.LengthInBytes / $TotalSize * 100
+            $SizeInPercent = $_.Length / $TotalSize * 100
             $SizeInOneTenths = ([math]::round(([math]::round($SizeInPercent) / 10)))
 
             if ($SizeInOneTenths -ge 1) {
@@ -59,18 +61,25 @@
             }
             else {
                 if ($DisplayUnderOneTenthInVisualisation) {
-                    $SizeVisualised = '[<1%       ]'
+                    $SizeVisualised = '[<10%      ]'
                 }
                 else {
                     10..1 | ForEach-Object -Begin { $SizeVisualised = '[' }  -Process { $SizeVisualised += $VisualisationEmpty } -End { $SizeVisualised += ']' }
                 }
             }
-
-            $_.SizeInPercent = $SizeInPercent
             $_.SizeInOneTenths = $SizeInOneTenths
             $_.SizeVisualised = $SizeVisualised
+            $_.SizeInPercent = $SizeInPercent
         }
 
-        $AllItems | Sort-Object LengthInBytes -Descending
+        $AllItems = $AllItems | Sort-Object Length -Descending
+        $AllItems | ForEach-Object -Process {
+
+            # $_.SizeInPercent = ($_.SizeInPercent).ToString().Substring(0,5) + ' %'
+            $_.SizeInPercent = [string][math]::round($_.SizeInPercent, 2) + ' %'
+            $_.Length = "{0:n2} $($Magnitude)" -f ($_.Length / $MagnitudeCalc)
+        }
+
+        $AllItems | Format-Table -AutoSize
     }
 }

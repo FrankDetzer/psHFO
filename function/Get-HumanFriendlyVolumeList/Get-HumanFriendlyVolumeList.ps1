@@ -1,10 +1,9 @@
 ﻿function Get-HumanFriendlyVolumeList {
-    [CmdletBinding()]
-
     begin {
         $InputPath = Get-Volume
-        $obj = @()
+        $PreparedDataForEngine = @()
         $i = 1
+
     }
 
     process {
@@ -12,28 +11,19 @@
             $i++
             Write-Progress -Activity 'Search in Progress'  -Status "$i% Complete:" -PercentComplete $i;
 
-            if ($Item.PSIsContainer) {
-                $LengthInBytes = (Get-ChildItem -Path $Item.FullName -Recurse:$Recurse2 -File | Measure-Object Length -Sum).Sum
-
-            }
-            else {
-                $LengthInBytes = $Item.Length
-            }
-
-            if ($null -eq $LengthInBytes) {
-                $LengthInBytes = 0
-            }
-
-
-            $obj += [PSCustomObject][ordered]@{
-                'Name'          = $Item.Name
-                'LengthInBytes' = $LengthInBytes
-                'IsContainer'   = $Item.PSIsContainer
+            $PreparedDataForEngine += [PSCustomObject][ordered]@{
+                'Name'          = $Item.FriendlyName
+                'Length'        = $Item.Length
+                'SizeRemaining' = $Item.SizeRemaining
+                'IsContainer'   = $null
+                'FriendlyName1' = $Item.DriveLetter
+                'FriendlyName2' = $Item.FriendlyName
+                'FriendlyName3' = $null
             }
         }
     }
 
     end {
-        FormatTo-HumanFriendlyOutput -InputObjectCollection $obj
+        FormatTo-HumanFriendlyOutput -InputObjectCollection $PreparedDataForEngine -FriendlyName1 'DriveLetter' -FriendlyName2 'FriendlyName'
     }
 }
