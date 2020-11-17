@@ -5,5 +5,5 @@ foreach ($Function in $global:FunctionList) {
     . $Function
 }
 
-Set-Alias -Name 'ncdu' -Value 'Get-HumanFriendlyFileList'
-Set-Alias -Name 'ncvu' -Value 'Get-HumanFriendlyVolumeList'
+# Set-Alias -Name 'ncdu' -Value 'Get-HumanFriendlyFileList'
+# Set-Alias -Name 'ncvu' -Value 'Get-HumanFriendlyVolumeList'

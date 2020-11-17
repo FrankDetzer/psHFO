@@ -1,5 +1,6 @@
 ﻿function Get-HumanFriendlyFileList {
     [CmdletBinding()]
+    [alias("ncdu")]
     param (
         $Path = (Get-Location).Path
         # $Path = $env:USERPROFILE
@@ -32,9 +33,9 @@
                 'Name'          = $Item.Name
                 'Length' = $Length
                 'IsContainer'   = $Item.PSIsContainer
-                'FriendlyName1' = $null
-                'FriendlyName2' = $null
-                'FriendlyName3' = $null
+                'PropertyName1' = $null
+                'PropertyName2' = $null
+                'PropertyName3' = $null
             }
         }
     }
