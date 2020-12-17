@@ -14,7 +14,8 @@
         [string]$VisualisationFull = '#',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
         [string]$VisualisationEmpty = '-',
-        [bool]$DisplayUnderOneTenthInVisualisation = $true
+        [bool]$DisplayUnderOneTenthInVisualisation = $true,
+        [bool]$EnableForwardSlashOnFolder = $true
     )
 
     begin {
@@ -32,8 +33,9 @@
     process {
         foreach ($InputObject in $InputObjectCollection) {
             $AllItems += [PSCustomObject][ordered]@{
-               # 'Length'          = "{0:n2} $($Magnitude)" -f ($InputObject.Length / $MagnitudeCalc)
-                 'Length'          = $InputObject.Length
+                # 'Length'          = "{0:n2} $($Magnitude)" -f ($InputObject.Length / $MagnitudeCalc)
+                'LengthInBytes'          = $InputObject.Length
+                'Length'          = $InputObject.Length
                 'SizeInPercent'   = $null
                 'SizeInOneTenths' = $null
                 'SizeVisualised'  = $null
@@ -76,10 +78,22 @@
         $AllItems | ForEach-Object -Process {
 
             # $_.SizeInPercent = ($_.SizeInPercent).ToString().Substring(0,5) + ' %'
-            $_.SizeInPercent = [string][math]::round($_.SizeInPercent, 2) + ' %'
+            # $_.SizeInPercent = [string][math]::round($_.SizeInPercent, 2) + ' %'
+            $_.SizeInPercent = "{0:n2} %" -f ([math]::round($_.SizeInPercent, 2))
             $_.Length = "{0:n2} $($Magnitude)" -f ($_.Length / $MagnitudeCalc)
+
+            if ($EnableForwardSlashOnFolder) {
+                if ($_.IsContainer){
+                    $_.Name = $_.Name + '/'
+                }
+            }
         }
 
-        $AllItems | Format-Table -AutoSize
+        # $AllItems | Format-Table -AutoSize
+        $AllItems | Sort-Object IsContainer,LengthInBytes -Descending | Format-Table -AutoSize -Property Name, SizeVisualised, @{n = "Length"; e = { $_.Length }; a = "right" }, @{n = "SizeInPercent"; e = { $_.SizeInPercent }; a = "right" }, IsContainer
+        
+        # *,@{n="Freespace(byte)";e={$_.SizeInPercent};a="right"}
+        # @{Expression="Length";Descending=$true}
+        # Sort-Object @{Expression="IsContainer";Descending=$true},@{Expression="Length";Descending=$true}
     }
 }

@@ -31,7 +31,7 @@
 
             $PreparedDataForEngine += [PSCustomObject][ordered]@{
                 'Name'          = $Item.Name
-                'Length' = $Length
+                'Length'        = $Length
                 'IsContainer'   = $Item.PSIsContainer
                 'PropertyName1' = $null
                 'PropertyName2' = $null
