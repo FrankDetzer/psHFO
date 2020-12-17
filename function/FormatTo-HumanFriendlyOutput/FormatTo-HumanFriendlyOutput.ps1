@@ -9,12 +9,12 @@
         [parameter(ValueFromPipeline)]
         [string]$PropertyName3 = "PropertyName3",
         [validateset('Bytes', 'KB', 'MB', 'GB', 'TB')]
-        [string]$Magnitude = 'MB',
+        [string]$MagnitudExpression = 'MB',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
         [string]$VisualisationFull = '#',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
         [string]$VisualisationEmpty = '-',
-        [bool]$DisplayUnderOneTenthInVisualisation = $true,
+        [bool]$DisplayUnderOneTenthInVisualisatioNamExpression = $true,
         [bool]$EnableForwardSlashOnFolder = $true
     )
 
@@ -33,8 +33,7 @@
     process {
         foreach ($InputObject in $InputObjectCollection) {
             $AllItems += [PSCustomObject][ordered]@{
-                # 'Length'          = "{0:n2} $($Magnitude)" -f ($InputObject.Length / $MagnitudeCalc)
-                'LengthInBytes'          = $InputObject.Length
+                'LengthInBytes'   = $InputObject.Length
                 'Length'          = $InputObject.Length
                 'SizeInPercent'   = $null
                 'SizeInOneTenths' = $null
@@ -49,7 +48,6 @@
     }
 
     end {
-        $TotalSize = ($AllItems | Measure-Object -Property Length -Sum).Sum
 
         $AllItems | ForEach-Object -Process {
             $SizeInPercent = $_.Length / $TotalSize * 100
@@ -77,23 +75,16 @@
         $AllItems = $AllItems | Sort-Object Length -Descending
         $AllItems | ForEach-Object -Process {
 
-            # $_.SizeInPercent = ($_.SizeInPercent).ToString().Substring(0,5) + ' %'
-            # $_.SizeInPercent = [string][math]::round($_.SizeInPercent, 2) + ' %'
             $_.SizeInPercent = "{0:n2} %" -f ([math]::round($_.SizeInPercent, 2))
             $_.Length = "{0:n2} $($Magnitude)" -f ($_.Length / $MagnitudeCalc)
 
             if ($EnableForwardSlashOnFolder) {
-                if ($_.IsContainer){
-                    $_.Name = $_.Name + '/'
+                if ($_.IsContainer) {
+                    $_.NamExpression = $_.Name + '/'
                 }
             }
         }
 
-        # $AllItems | Format-Table -AutoSize
-        $AllItems | Sort-Object IsContainer,LengthInBytes -Descending | Format-Table -AutoSize -Property Name, SizeVisualised, @{n = "Length"; e = { $_.Length }; a = "right" }, @{n = "SizeInPercent"; e = { $_.SizeInPercent }; a = "right" }, IsContainer
-        
-        # *,@{n="Freespace(byte)";e={$_.SizeInPercent};a="right"}
-        # @{Expression="Length";Descending=$true}
-        # Sort-Object @{Expression="IsContainer";Descending=$true},@{Expression="Length";Descending=$true}
+        $AllItems | Sort-Object IsContainer, LengthInBytes -Descending | Format-Table -AutoSize -Property Name, SizeVisualised, @{NamExpression = "Length"; Expression = { $_.Length }; Align = "right" }, @{NamExpression = "SizeInPercent"; Expression = { $_.SizeInPercent }; Align = "right" }, IsContainer
     }
 }
