@@ -13,8 +13,11 @@
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
         [string]$VisualisationFull = '#',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
-        [string]$VisualisationEmpty = '-',
-        [bool]$DisplayUnderOneTenthInVisualisation = $true
+        [string]$VisualisationEmpty = ' ',
+        [validateset('[]', '()', '{}')]
+        [string]$Parentheses = '[]',
+        [bool]$DisplayUnderOneTenthInVisualisation = $true,
+        [bool]$EnableForwardSlashOnFolder = $true
     )
 
     begin {
@@ -32,10 +35,9 @@
     process {
         foreach ($InputObject in $InputObjectCollection) {
             $AllItems += [PSCustomObject][ordered]@{
-               # 'Length'          = "{0:n2} $($Magnitude)" -f ($InputObject.Length / $MagnitudeCalc)
-               'Length'          = $InputObject.Length
-               'LengthInBytes'          = $InputObject.Length
-               'SizeInPercent'   = $null
+                'Length'          = $InputObject.Length
+                'LengthInBytes'   = $InputObject.Length
+                'SizeInPercent'   = $null
                 'SizeInOneTenths' = $null
                 'SizeVisualised'  = $null
                 'Name'            = $InputObject.Name
@@ -53,21 +55,65 @@
         $AllItems | ForEach-Object -Process {
             $SizeInPercent = $_.Length / $TotalSize * 100
             $SizeInOneTenths = ([math]::round(([math]::round($SizeInPercent) / 10)))
+            $SimplePercent = [int]$SizeInPercent
 
-            if ($SizeInOneTenths -ge 1) {
-                $SizeInOneTenths..1 | ForEach-Object -Begin { $SizeVisualised = '[' }  -Process { $SizeVisualised += $VisualisationFull } -End {
-                    if ($SizeInOneTenths -lt 10) { (10 - $SizeInOneTenths)..1 | ForEach-Object -Process { $SizeVisualised += $VisualisationEmpty } }
-                    $SizeVisualised += ']'
-                }
+            if ($SimplePercent -eq 100) {
+                $InRange = 10
+                $OutRange = 0
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 99..90) {
+                $InRange = 9
+                $OutRange = 1
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 89..80) {
+                $InRange = 8
+                $OutRange = 2
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 79..70) {
+                $InRange = 7
+                $OutRange = 3
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 69..60) {
+                $InRange = 6
+                $OutRange = 4
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 59..50) {
+                $InRange = 5
+                $OutRange = 5
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 49..40) {
+                $InRange = 4
+                $OutRange = 6
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 39..30) {
+                $InRange = 3
+                $OutRange = 7
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 29..20) {
+                $InRange = 2
+                $OutRange = 8
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 19..10) {
+                $InRange = 1
+                $OutRange = 9
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
+            }
+            elseif ($SimplePercent -in 9..2) {
+                $SizeVisualised = '[~1%       ]'
             }
             else {
-                if ($DisplayUnderOneTenthInVisualisation) {
-                    $SizeVisualised = '[<10%      ]'
-                }
-                else {
-                    10..1 | ForEach-Object -Begin { $SizeVisualised = '[' }  -Process { $SizeVisualised += $VisualisationEmpty } -End { $SizeVisualised += ']' }
-                }
+                $SizeVisualised = '[<1%       ]'
             }
+
             $_.SizeInOneTenths = $SizeInOneTenths
             $_.SizeVisualised = $SizeVisualised
             $_.SizeInPercent = $SizeInPercent
