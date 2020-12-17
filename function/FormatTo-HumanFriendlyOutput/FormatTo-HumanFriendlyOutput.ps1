@@ -9,13 +9,12 @@
         [parameter(ValueFromPipeline)]
         [string]$PropertyName3 = "PropertyName3",
         [validateset('Bytes', 'KB', 'MB', 'GB', 'TB')]
-        [string]$MagnitudExpression = 'MB',
+        [string]$Magnitude = 'MB',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
         [string]$VisualisationFull = '#',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
         [string]$VisualisationEmpty = '-',
-        [bool]$DisplayUnderOneTenthInVisualisatioNamExpression = $true,
-        [bool]$EnableForwardSlashOnFolder = $true
+        [bool]$DisplayUnderOneTenthInVisualisation = $true
     )
 
     begin {
@@ -33,9 +32,10 @@
     process {
         foreach ($InputObject in $InputObjectCollection) {
             $AllItems += [PSCustomObject][ordered]@{
-                'LengthInBytes'   = $InputObject.Length
-                'Length'          = $InputObject.Length
-                'SizeInPercent'   = $null
+               # 'Length'          = "{0:n2} $($Magnitude)" -f ($InputObject.Length / $MagnitudeCalc)
+               'Length'          = $InputObject.Length
+               'LengthInBytes'          = $InputObject.Length
+               'SizeInPercent'   = $null
                 'SizeInOneTenths' = $null
                 'SizeVisualised'  = $null
                 'Name'            = $InputObject.Name
@@ -48,6 +48,7 @@
     }
 
     end {
+        $TotalSize = ($AllItems | Measure-Object -Property Length -Sum).Sum
 
         $AllItems | ForEach-Object -Process {
             $SizeInPercent = $_.Length / $TotalSize * 100
@@ -80,11 +81,11 @@
 
             if ($EnableForwardSlashOnFolder) {
                 if ($_.IsContainer) {
-                    $_.NamExpression = $_.Name + '/'
+                    $_.Name = $_.Name + '/'
                 }
             }
         }
 
-        $AllItems | Sort-Object IsContainer, LengthInBytes -Descending | Format-Table -AutoSize -Property Name, SizeVisualised, @{NamExpression = "Length"; Expression = { $_.Length }; Align = "right" }, @{NamExpression = "SizeInPercent"; Expression = { $_.SizeInPercent }; Align = "right" }, IsContainer
+        $AllItems | Sort-Object IsContainer, LengthInBytes -Descending | Format-Table -AutoSize -Property Name, SizeVisualised, @{Name = "Length"; Expression = { $_.Length }; Align = "right" }, @{Name = "SizeInPercent"; Expression = { $_.SizeInPercent }; Align = "right" }, IsContainer
     }
 }
