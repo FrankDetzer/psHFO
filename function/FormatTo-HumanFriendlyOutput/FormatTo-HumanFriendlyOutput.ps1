@@ -59,59 +59,44 @@
 
             if ($SimplePercent -eq 100) {
                 $InRange = 10
-                $OutRange = 0
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 99..90) {
                 $InRange = 9
-                $OutRange = 1
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 89..80) {
                 $InRange = 8
-                $OutRange = 2
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 79..70) {
                 $InRange = 7
-                $OutRange = 3
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 69..60) {
                 $InRange = 6
-                $OutRange = 4
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 59..50) {
                 $InRange = 5
-                $OutRange = 5
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 49..40) {
                 $InRange = 4
-                $OutRange = 6
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 39..30) {
                 $InRange = 3
-                $OutRange = 7
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 29..20) {
                 $InRange = 2
-                $OutRange = 8
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
             elseif ($SimplePercent -in 19..10) {
                 $InRange = 1
-                $OutRange = 9
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * $OutRange) + $Parentheses.Substring(1, 1)
             }
-            elseif ($SimplePercent -in 9..2) {
+
+            if ($SimplePercent -in 9..2) {
                 $SizeVisualised = '[~1%       ]'
             }
-            else {
+            elseif ($SimplePercent -in 2..0) {
                 $SizeVisualised = '[<1%       ]'
+            }
+            
+            if ($InRange -ge 1) {
+                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * (10 - $InRange)) + $Parentheses.Substring(1, 1)
             }
 
             $_.SizeInOneTenths = $SizeInOneTenths
