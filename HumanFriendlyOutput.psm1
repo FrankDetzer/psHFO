@@ -1,9 +1,6 @@
-﻿$global:LangPath = $PSScriptRoot + '\lang'
-$global:FunctionList = (Get-ChildItem -Path ($PSScriptRoot + '\function') -Recurse -Filter '*.ps1').FullName
+﻿# $global:LangPath = $PSScriptRoot + '\lang'
+# $global:FunctionList = (Get-ChildItem -Path ($PSScriptRoot + '\function') -Recurse -Filter '*.ps1').FullName
 
-foreach ($Function in $global:FunctionList) {
+foreach ($Function in (Get-ChildItem -Path ($PSScriptRoot + '\function') -Recurse -Filter '*.ps1').FullName) {
     . $Function
 }
-
-# Set-Alias -Name 'ncdu' -Value 'Get-HumanFriendlyFileList'
-# Set-Alias -Name 'ncvu' -Value 'Get-HumanFriendlyVolumeList'
