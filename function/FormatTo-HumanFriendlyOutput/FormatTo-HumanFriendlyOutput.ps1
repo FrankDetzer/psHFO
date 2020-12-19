@@ -54,53 +54,9 @@
 
         $AllItems | ForEach-Object -Process {
             $SizeInPercent = $_.Length / $TotalSize * 100
-            $SizeInOneTenths = ([math]::round(([math]::round($SizeInPercent) / 10)))
-            $SimplePercent = [int]$SizeInPercent
+            [int]$SimplePercent = $SizeInPercent / 10
 
-            if ($SimplePercent -eq 100) {
-                $InRange = 10
-            }
-            elseif ($SimplePercent -in 99..90) {
-                $InRange = 9
-            }
-            elseif ($SimplePercent -in 89..80) {
-                $InRange = 8
-            }
-            elseif ($SimplePercent -in 79..70) {
-                $InRange = 7
-            }
-            elseif ($SimplePercent -in 69..60) {
-                $InRange = 6
-            }
-            elseif ($SimplePercent -in 59..50) {
-                $InRange = 5
-            }
-            elseif ($SimplePercent -in 49..40) {
-                $InRange = 4
-            }
-            elseif ($SimplePercent -in 39..30) {
-                $InRange = 3
-            }
-            elseif ($SimplePercent -in 29..20) {
-                $InRange = 2
-            }
-            elseif ($SimplePercent -in 19..10) {
-                $InRange = 1
-            }
-
-            if ($SimplePercent -in 9..2) {
-                $SizeVisualised = '[~1%       ]'
-            }
-            elseif ($SimplePercent -in 2..0) {
-                $SizeVisualised = '[<1%       ]'
-            }
-            
-            if ($InRange -ge 1) {
-                $SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $InRange) + ($VisualisationEmpty * (10 - $InRange)) + $Parentheses.Substring(1, 1)
-            }
-
-            $_.SizeInOneTenths = $SizeInOneTenths
-            $_.SizeVisualised = $SizeVisualised
+            $_.SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $SimplePercent) + ($VisualisationEmpty * (10 - $SimplePercent)) + $Parentheses.Substring(1, 1)
             $_.SizeInPercent = $SizeInPercent
         }
 
