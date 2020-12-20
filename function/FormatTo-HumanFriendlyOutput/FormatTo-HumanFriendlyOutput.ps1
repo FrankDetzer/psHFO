@@ -32,9 +32,14 @@
     }
 
     process {
-        $AllItems = @()
+        $Output = @()
+        $Output = [pscustomobject]@{
+            Meta = @()
+            Data = @()
+        }            
+
         foreach ($InputObject in $InputObjectCollection) {
-            $AllItems += [PSCustomObject][ordered]@{
+            $Output.Data += [PSCustomObject][ordered]@{
                 'Length'         = $InputObject.Length
                 'Mode'           = $InputObject.Mode
                 'SizeInPercent'  = $null
@@ -45,31 +50,39 @@
                 # $PropertyName3    = $InputObject.PropertyName3
                 'IsContainer'    = $InputObject.IsContainer
             }
-        }
-    }
-
-    end {
-        $TotalSize = ($AllItems | Measure-Object -Property Length -Sum).Sum
-
-        $AllItems | ForEach-Object {
-            $SizeInPercent = $_.Length / $TotalSize * 100
-            [int]$SimplePercent = $SizeInPercent / 10
-
-            $_.SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $SimplePercent) + ($VisualisationEmpty * (10 - $SimplePercent)) + $Parentheses.Substring(1, 1)
-            $_.SizeInPercent = $SizeInPercent
-
-            if ($EnableForwardSlashOnFolder) {
-                if ($_.IsContainer) {
-                    $_.Name = $_.Name + '/'
-                }
             }
         }
-        $AllItems | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Length'; Expression = { "{0:n2} $($Magnitude.ToUpper())" -f ($_.Length / $MagnitudeCalc) }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }
 
-        $TotalItemSize = ($AllItems | Measure-Object Length -Sum).Sum / $MagnitudeCalc
+        end {
+            $TotalSize = ($Output.Data | Measure-Object -Property Length -Sum).Sum
 
-        Write-Output ('Path:             ' + $Path)
-        Write-Output ('Total Item Count: ' + $AllItems.Count)
-        Write-Output ('Total Item Size:  ' + "{0:n2} $($Magnitude.ToUpper())" -f $TotalItemSize)
+            $Output.Data | ForEach-Object {
+                $SizeInPercent = $_.Length / $TotalSize * 100
+                [int]$SimplePercent = $SizeInPercent / 10
+
+                $_.SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $SimplePercent) + ($VisualisationEmpty * (10 - $SimplePercent)) + $Parentheses.Substring(1, 1)
+                $_.SizeInPercent = $SizeInPercent
+
+                if ($EnableForwardSlashOnFolder) {
+                    if ($_.IsContainer) {
+                        $_.Name = $_.Name + '/'
+                    }
+                }
+            }
+            
+            $Output.Meta = (
+                [pscustomobject]@{
+                    Path           = $Path
+                    Magnitude      = $Magnitude
+                    TotalItemCount = $Output.Data.Count
+                    TotalItemSize  = ($Output.Data | Measure-Object Length -Sum).Sum
+                })
+
+            $Output.Meta  | Format-Table -AutoSize -Property Path, TotalItemCount, @{Name = 'TotalItemSize'; Expression = { "{0:n2} $($Magnitude.ToUpper())" -f ($_.TotalItemSize / $MagnitudeCalc) }
+
+            $Output.Data | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Length'; Expression = { "{0:n2} $($Magnitude.ToUpper())" -f ($_.Length / $MagnitudeCalc) }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }
+
+
+        }
     }
 }
