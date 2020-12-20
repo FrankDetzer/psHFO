@@ -17,7 +17,8 @@
         [validateset('[]', '()', '{}')]
         [string]$Parentheses = '[]',
         [bool]$DisplayUnderOneTenthInVisualisation = $true,
-        [bool]$EnableForwardSlashOnFolder = $true
+        [bool]$EnableForwardSlashOnFolder = $true,
+        [string]$Path = $null
     )
 
     begin {
@@ -34,15 +35,15 @@
         $AllItems = @()
         foreach ($InputObject in $InputObjectCollection) {
             $AllItems += [PSCustomObject][ordered]@{
-                'Length'          = $InputObject.Length
-                'SizeInPercent'   = $null
-                'SizeInOneTenths' = $null
-                'SizeVisualised'  = $null
-                'Name'            = $InputObject.Name
+                'Length'         = $InputObject.Length
+                'Mode'           = $InputObject.Mode
+                'SizeInPercent'  = $null
+                'SizeVisualised' = $null
+                'Name'           = $InputObject.Name
                 # $PropertyName1    = $InputObject.PropertyName1
                 # $PropertyName2    = $InputObject.PropertyName2
                 # $PropertyName3    = $InputObject.PropertyName3
-                'IsContainer'     = $InputObject.IsContainer
+                'IsContainer'    = $InputObject.IsContainer
             }
         }
     }
@@ -63,7 +64,10 @@
                 }
             }
         }
+        $AllItems | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Length'; Expression = { "{0:n2} $($Magnitude.ToUpper())" -f ($_.Length / $MagnitudeCalc) }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }
 
-        $AllItems | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, SizeVisualised, @{Name = 'Length'; Expression = { "{0:n2} $($Magnitude)" -f ($_.Length / $MagnitudeCalc) }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }, IsContainer
+        Write-Output ('Path:             ' + $Path)
+        Write-Output ('Total Item Count: ' + $AllItems.Count)
+        # Write-Output ('Total Item Size   ' + {0:n2} $($Magnitude.ToUpper())" -f (($_.Length )/ $MagnitudeCal
     }
 }

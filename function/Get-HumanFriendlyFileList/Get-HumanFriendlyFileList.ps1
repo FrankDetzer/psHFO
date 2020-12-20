@@ -1,19 +1,22 @@
 ﻿function Get-HumanFriendlyFileList {
     [alias('ncdu')]
     param (
-        $Path = (Get-Location).Path
+        $Path = (Get-Location).Path,
+        [validateset('Bytes', 'KB', 'MB', 'GB', 'TB')]
+        [string]$Magnitude = 'MB'
     )
 
     begin {
         $InputPath = Get-ChildItem -Path $Path -Recurse:$false
         $PreparedDataForEngine = @()
-        $i = 1
+        $Counter = 1
     }
 
     process {
         foreach ($Item in $InputPath) {
-            $i++
-            Write-Progress -Activity 'Search in Progress'  -Status "$i% Complete:" -PercentComplete $i;
+            $Counter++
+            $PercentComplete = $Counter * $InputPath.Count / 100
+            Write-Progress -Activity 'Search in Progress' -Status ([string]$Counter + '/' + [string]$InputPath.Count + ' (' + '{0:n2} %)' -f ($PercentComplete) + ' files indexed') -PercentComplete $PercentComplete
 
             if ($Item.PSIsContainer) {
                 $Length = (Get-ChildItem -Path $Item.FullName -Recurse:$true -File | Measure-Object Length -Sum).Sum
@@ -28,14 +31,15 @@
             }
 
             $PreparedDataForEngine += [PSCustomObject][ordered]@{
-                'Name'          = $Item.Name
-                'Length'        = $Length
-                'IsContainer'   = $Item.PSIsContainer
+                'Name'        = $Item.Name
+                'Length'      = $Length
+                'Mode'        = $Item.Mode
+                'IsContainer' = $Item.PSIsContainer
             }
         }
     }
 
     end {
-        FormatTo-HumanFriendlyOutput -InputObjectCollection $PreparedDataForEngine
+        FormatTo-HumanFriendlyOutput -InputObjectCollection $PreparedDataForEngine -Magnitude $Magnitude -Path $Path
     }
 }
