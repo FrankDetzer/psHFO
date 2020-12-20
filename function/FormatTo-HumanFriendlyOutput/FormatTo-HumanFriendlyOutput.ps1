@@ -66,8 +66,10 @@
         }
         $AllItems | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Length'; Expression = { "{0:n2} $($Magnitude.ToUpper())" -f ($_.Length / $MagnitudeCalc) }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }
 
+        $TotalItemSize = ($AllItems | Measure-Object Length -Sum).Sum / $MagnitudeCalc
+
         Write-Output ('Path:             ' + $Path)
         Write-Output ('Total Item Count: ' + $AllItems.Count)
-        # Write-Output ('Total Item Size   ' + {0:n2} $($Magnitude.ToUpper())" -f (($_.Length )/ $MagnitudeCal
+        Write-Output ('Total Item Size:  ' + "{0:n2} $($Magnitude.ToUpper())" -f $TotalItemSize)
     }
 }
