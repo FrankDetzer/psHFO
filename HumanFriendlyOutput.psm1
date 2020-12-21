@@ -2,7 +2,7 @@
 # Module Github Page:   https://github.com/FrankDetzer/HumanFriendlyOutput
 # Module Release Page:  https://frankdetzer.com/release-of-my-ncdu-clone-for-powershell
 # Module Version:       1.00
-# Module Date:          2020-12-20
+# Module Date:          2020-12-21
 #
 # Author Website:       https://frankdetzer.com
 # Author Twitter:       https://twitter.com/frankdetzer
