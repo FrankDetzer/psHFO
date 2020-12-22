@@ -65,5 +65,5 @@ ghffl
 ## NOTES
 
 ## RELATED LINKS
-https://frankdetzer.com/release-of-my-ncdu-clone-for-powershell
+https://frankdetzer.com/release-of-my-ncdu-clone-for-powershell-windows
 
