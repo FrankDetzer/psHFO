@@ -171,6 +171,9 @@
         )
 
         $Output.Meta | Format-Table -AutoSize -Property Path, TotalItemCount, @{Name = 'TotalItemSize'; Expression = { $_.TotalItemSize }; Align = 'right' }, FolderCount, ItemCount
+
+
+        
         if ($AllFilesReadable) {
             $Output.Data | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Size'; Expression = { $_.Size }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }
         }
