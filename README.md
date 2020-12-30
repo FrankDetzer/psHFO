@@ -10,11 +10,6 @@ psHFO is my heavily inspired PowerShell module of "ncdu" (NCurses Disk Usage mad
 
 
 ## RELATED LINKS
-<<<<<<< Updated upstream
-https://frankdetzer.com/release-of-my-ncdu-clone-for-powershell-windows
-
-=======
 * Link on my homepage: https://frankdetzer.com/release-of-pshfo/
 * Link to the github page: https://github.com/FrankDetzer/psHFO
 * Link to the github wiki: https://github.com/FrankDetzer/psHFO/wiki
->>>>>>> Stashed changes
