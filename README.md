@@ -6,8 +6,7 @@
 psHFO is my heavily inspired PowerShell module of "ncdu" (NCurses Disk Usage made by Yoran Heling). I was able to get in touch with him and he is fine with my project. My intend with this module is provide an easy and open-source console-based disk usage analyzer for PowerShell mainly used on windows.
 
 ## CMDLET
-* Get-HumanFriendlyFileList - Use this cmdlet to view items and folders and their respective size and attributes. 
-
+* Get-HumanFriendlyFileList - Use this cmdlet to view items and folders and their respective size and attributes. You can find help for this cmdlet [here](https://github.com/FrankDetzer/psHFO/wiki/Get-HumanFriendlyFileList).
 
 ## RELATED LINKS
 * Link on my homepage: https://frankdetzer.com/release-of-pshfo/
