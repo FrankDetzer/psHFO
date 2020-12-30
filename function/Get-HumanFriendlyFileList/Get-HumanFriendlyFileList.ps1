@@ -1,6 +1,4 @@
 ﻿function Get-HumanFriendlyFileList {
-    [alias('ncdu')]
-    [alias('ghffl')]
     param (
         $Path = (Get-Location).Path,
         [validateset('Auto', 'Bytes', 'KB', 'MB', 'GB', 'TB', 'PB')]
