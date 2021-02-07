@@ -11,6 +11,6 @@ foreach ($Function in (Get-ChildItem -Path ($PSScriptRoot + '\function') -Recurs
     . $Function
 }
 
-
+Set-Alias -Name 'psdu' -Value 'Get-HumanFriendlyFileList'
 Set-Alias -Name 'gfl' -Value 'Get-HumanFriendlyFileList'
 Set-Alias -Name 'ncdu' -Value 'Get-HumanFriendlyFileList'

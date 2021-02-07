@@ -1,13 +1,8 @@
 ﻿function Format-ToHumanFriendlyOutput {
     param (
-        [parameter(ValueFromPipeline)]
-        [psobject]$InputObjectCollection,
-        # [parameter(ValueFromPipeline)]
-        # [string]$PropertyName1 = 'PropertyName1',
-        # [parameter(ValueFromPipeline)]
-        # [string]$PropertyName2 = 'PropertyName2',
-        # [parameter(ValueFromPipeline)]
-        # [string]$PropertyName3 = 'PropertyName3',
+        [validateset('Path', 'Partition')]
+        [string]$Mode = 'Path',
+        [string]$Parameter = (Get-Location).Path,
         [validateset('Auto', 'Bytes', 'KB', 'MB', 'GB', 'TB', 'PB')]
         [string]$SizeUnit = 'Auto',
         [validateset('#', '-', '_', '*', '+', '=', ' ')]
@@ -16,170 +11,109 @@
         [string]$VisualisationEmpty = ' ',
         [validateset('[]', '()', '{}')]
         [string]$Parentheses = '[]',
-        [bool]$DisplayUnderOneTenthInVisualisation = $true,
-        [bool]$EnableForwardSlashOnFolder = $true,
-        [string]$Path = $null,
-        [bool]$AllFilesReadable = $false
+        [bool]$EnableUnderOneTenthInVisualisation = $true,
+        [bool]$EnableForwardSlashOnPath = $true
     )
 
     begin {
+        [uint64]$TotalItemLength = 0
+        $AllFilesReadable = $true
         $Output = @()
-        $Output = [pscustomobject]@{
-            Meta = @()
-            Data = @()
-        }            
-    }
+        $Readable = $true
+        $Counter = 1
 
-    process {
-        foreach ($InputObject in $InputObjectCollection) {
-            if ($SizeUnit -eq 'Auto') {
-                if ($InputObject.Length -lt 1) {
-                    $Size = $null
-                }
-                elseif ($InputObject.Length -lt 1KB) {
-                    $Size = "{0:n0}     B" -f ($InputObject.Length / 1)
-                }
-                elseif ($InputObject.Length -lt 1MB) {
-                    $Size = "{0:n2} KB" -f ($InputObject.Length / 1KB)
-                }
-                elseif ($InputObject.Length -lt 1GB) {
-                    $Size = "{0:n2} MB" -f ($InputObject.Length / 1MB)
-                }
-                elseif ($InputObject.Length -lt 1TB) {
-                    $Size = "{0:n2} GB" -f ($InputObject.Length / 1GB)
-                }
-                elseif ($InputObject.Length -lt 1PB) {
-                    $Size = "{0:n2} TB" -f ($InputObject.Length / 1TB)
+        if ($Mode -eq 'Path') {
+            if ($Parameter.Length -eq 1){
+                $Parameter = $Parameter + ':'
+            }
+
+            $List = Get-ChildItem -Path $Parameter -Recurse:$false
+            $Disk = Get-PSDrive $List[0].PSDrive
+            $DiskTotalSpaceInBytes = $Disk.Used + $Disk.Free
+
+            foreach ($Item in $List) {
+                $PercentComplete = $Counter / $List.Count * 100
+                Write-Progress -Activity 'Indexing in Progress' -Status ([string]$Counter + '/' + [string]$List.Count + ' (' + '{0:n2} %)' -f ($PercentComplete) + ' items indexed') -PercentComplete $PercentComplete
+
+                if ($Item.PSIsContainer) {
+                    try {
+                        $Length = (Get-ChildItem -Path $Item.FullName -Recurse:$true -File -ErrorAction Stop | Measure-Object Length -Sum).Sum 
+                    }
+                    catch {
+                        $Readable = $false
+                        $AllFilesReadable = $false
+                        $Length = 0
+                    }
                 }
                 else {
-                    $Size = "{0:n2} PB" -f ($InputObject.Length / 1PB)
+                    $Length = $Item.Length
                 }
-            }
-            else {
-                switch ($SizeUnit) {
-                    'Bytes' {
-                        $Size = $null
-                    }
-                    'KB' {
-                        $Size = "{0:n2} KB" -f ($InputObject.Length / 1KB)
-                    }
-                    'MB' {
-                        $Size = "{0:n2} MB" -f ($InputObject.Length / 1MB)
-                    }
-                    'GB' {
-                        $Size = "{0:n2} GB" -f ($InputObject.Length / 1GB)
-                    }
-                    'TB' {
-                        $Size = "{0:n2} TB" -f ($InputObject.Length / 1TB)
-                    }
-                    'PB' {
-                        $Size = "{0:n2} PB" -f ($InputObject.Length / 1PB)
-                    }
+
+                if ($null -eq $Length) {
+                    $Length = 0
                 }
+
+
+                $Output += [PSCustomObject][ordered]@{
+                    'Name'           = $Item.Name
+                    'SizeVisualised' = $null
+                    'Mode'           = $Item.Mode
+                    'Length'         = $Length
+                    'SizeInPercent'  = $null
+                    'Readable'       = $Readable
+                    'IsContainer'    = $Item.PSIsContainer
+                }
+
+                $TotalItemLength += $Length
+                $Counter++
             }
 
-            $Output.Data += [PSCustomObject][ordered]@{
-                'Length'         = $InputObject.Length
-                'Mode'           = $InputObject.Mode
-                'Size'           = $Size
-                'SizeInPercent'  = $null
-                'SizeVisualised' = $null
-                'Name'           = $InputObject.Name
-                # $PropertyName1    = $InputObject.PropertyName1
-                # $PropertyName2    = $InputObject.PropertyName2
-                # $PropertyName3    = $InputObject.PropertyName3
-                'IsContainer'    = $InputObject.IsContainer
-                'CompletelyReadable'       = $InputObject.Readable
-            }
+            $Meta = (
+                [pscustomobject]@{
+                    Path           = $List[0].Parent
+                    TotalItemCount = $Output.Count
+                    TotalItemSize  = $TotalItemLength
+                    FolderCount    = ($Output | Where-Object { $_.IsContainer -eq $true }).Count
+                    ItemCount      = ($Output | Where-Object { $_.IsContainer -eq $false }).Count
+                    UsageInPercent  = '{0:n2} %' -f ([math]::round($TotalItemLength / $DiskTotalSpaceInBytes * 100, 2)) 
+                }
+            )    
+        }
+        if ($Mode -eq 'Partition') {
+
         }
     }
 
-    end {
-        $TotalSize = ($Output.Data | Measure-Object -Property Length -Sum).Sum
-
-        $Output.Data | ForEach-Object {
-            $SizeInPercent = $_.Length / $TotalSize * 100
+    process {
+        $Output = $Output | Sort-Object IsContainer, Length -Descending 
+        $Output | ForEach-Object {
+            $SizeInPercent = $_.Length / $TotalItemLength * 100
             [int]$SimplePercent = $SizeInPercent / 10
 
             $_.SizeVisualised = $Parentheses.Substring(0, 1) + ($VisualisationFull * $SimplePercent) + ($VisualisationEmpty * (10 - $SimplePercent)) + $Parentheses.Substring(1, 1)
-            $_.SizeInPercent = $SizeInPercent
+            $_.SizeInPercent = '{0:n2} %' -f ([math]::round($SizeInPercent, 2)) 
+            $_.Length = Format-BytesToHumanReadable -Length $_.Length -SizeUnit $SizeUnit
 
-            if ($EnableForwardSlashOnFolder) {
+            if ($EnableForwardSlashOnPath) {
                 if ($_.IsContainer) {
                     $_.Name = $_.Name + '/'
                 }
             }
         }
-            
-        $TotalItemSize = ($Output.Data | Measure-Object Length -Sum).Sum
-        if ($SizeUnit -eq 'Auto') {
-            if ($TotalItemSize -lt 1) {
-                $OutputSIze = $null
-            }
-            elseif ($TotalItemSize -lt 1KB) {
-                $OutputSIze = "{0:n0}     B" -f ($TotalItemSize / 1)
-            }
-            elseif ($TotalItemSize -lt 1MB) {
-                $OutputSIze = "{0:n2} KB" -f ($TotalItemSize / 1KB)
-            }
-            elseif ($TotalItemSize -lt 1GB) {
-                $OutputSIze = "{0:n2} MB" -f ($TotalItemSize / 1MB)
-            }
-            elseif ($TotalItemSize -lt 1TB) {
-                $OutputSIze = "{0:n2} GB" -f ($TotalItemSize / 1GB)
-            }
-            elseif ($TotalItemSize -lt 1PB) {
-                $OutputSIze = "{0:n2} TB" -f ($TotalItemSize / 1TB)
-            }
-            else {
-                $OutputSIze = "{0:n2} PB" -f ($TotalItemSize / 1PB)
-            }
-        }
-        else {
-            switch ($SizeUnit) {
-                'Bytes' {
-                    $OutputSIze = $null
-                }
-                'KB' {
-                    $OutputSIze = "{0:n2} KB" -f ($TotalItemSize / 1KB)
-                }
-                'MB' {
-                    $OutputSIze = "{0:n2} MB" -f ($TotalItemSize / 1MB)
-                }
-                'GB' {
-                    $OutputSIze = "{0:n2} GB" -f ($TotalItemSize / 1GB)
-                }
-                'TB' {
-                    $OutputSIze = "{0:n2} TB" -f ($TotalItemSize / 1TB)
-                }
-                'PB' {
-                    $OutputSIze = "{0:n2} PB" -f ($TotalItemSize / 1PB)
-                }
-            }
-        }
-
-        $Output.Meta = (
-            [pscustomobject]@{
-                Path             = $Path
-                SizeUnit         = $SizeUnit
-                TotalItemCount   = $Output.Data.Count
-                TotalItemSize    = $OutputSize
-                FolderCount      = ($Output.Data | Where-Object { $_.IsContainer -eq $true }).Count
-                ItemCount        = ($Output.Data | Where-Object { $_.IsContainer -eq $false }).Count
-                AllFilesReadable = $AllFilesReadable
-            }
-        )
-
-        $Output.Meta | Format-Table -AutoSize -Property Path, TotalItemCount, @{Name = 'TotalItemSize'; Expression = { $_.TotalItemSize }; Align = 'right' }, FolderCount, ItemCount
-
-
         
+    }
+
+    end {
+        $Disk | Format-Table -AutoSize -Property @{Name = 'Disk'; Expression = { $_.Name } }, @{Name = 'Used'; Expression = { Format-BytesToHumanReadable -Length $_.Used -SizeUnit $SizeUnit }; Align = 'right' }, @{Name = 'Free'; Expression = { Format-BytesToHumanReadable -Length $_.Free -SizeUnit $SizeUnit }; Align = 'right' }, @{Name = 'Total'; Expression = { Format-BytesToHumanReadable -Length $DiskTotalSpaceInBytes -SizeUnit $SizeUnit }; Align = 'right' }
+        $Meta | Format-Table -AutoSize -Property Path, TotalItemCount, @{Name = 'TotalItemSize'; Expression = { Format-BytesToHumanReadable -Length $_.TotalItemSize -SizeUnit $SizeUnit }; Align = 'right' }, @{Name = 'UsageInPercent'; Expression = { $_.UsageInPercent }; Align = 'right' }, FolderCount, ItemCount
+
+
         if ($AllFilesReadable) {
-            $Output.Data | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Size'; Expression = { $_.Size }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }
+            $Output | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Length'; Expression = { $_.Length }; Align = 'right' }
         }
         else {
-            Write-Warning 'Results unaccurate. Unable to read all files/folders. Restart with elevated privileges to receive accurate results.'
-            $Output.Data | Sort-Object IsContainer, Length -Descending | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Size'; Expression = { $_.Size }; Align = 'right' }, @{Name = 'SizeInPercent'; Expression = { '{0:n2} %' -f ([math]::round($_.SizeInPercent, 2)) }; Align = 'right' }, CompletelyReadable
+            Write-Warning 'Results unaccurate. Unable to read all files/Paths. Restart with elevated privileges to receive accurate results.'
+            $Output | Format-Table -AutoSize -Property Name, Mode, SizeVisualised, @{Name = 'Length'; Expression = { $_.Length }; Align = 'right' }, Readable
         }
     }
 }

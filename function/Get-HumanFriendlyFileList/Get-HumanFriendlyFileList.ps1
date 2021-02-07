@@ -7,9 +7,10 @@
 
     begin {
         $InputPath = Get-ChildItem -Path $Path -Recurse:$false
-        $PreparedDataForEngine = @()
+        $psdu = @()
         $Counter = 1
         $AllFilesReadable = $true
+        [uint64]$TotalItemLength = 0
     }
 
     process {
@@ -37,7 +38,7 @@
             }
 
 
-            $PreparedDataForEngine += [PSCustomObject][ordered]@{
+            $psdu += [PSCustomObject][ordered]@{
                 'Name'             = $Item.Name
                 'Length'           = $Length
                 'Mode'             = $Item.Mode
@@ -45,11 +46,12 @@
                 'Readable'         = $Readable
                 'AllFilesReadable' = $AllFilesReadable
             }
+            $TotalItemLength += $Length
             $Counter++
         }
     }
 
     end {
-        Format-ToHumanFriendlyOutput -InputObjectCollection $PreparedDataForEngine -Path $Path -SizeUnit $SizeUnit -AllFilesReadable $AllFilesReadable
+        Format-ToHumanFriendlyOutput -InputObjectCollection $psdu -Path $Path -SizeUnit $SizeUnit -AllFilesReadable $AllFilesReadable -TotalItemLength $TotalItemLength
     }
 }
